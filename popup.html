@@ -18,6 +18,17 @@
         .el-drawer__body {
             padding: 7px !important;
         }
+
+        .row-box div{
+            height: 40px;
+            width: 40px;
+            border: 1px solid var(--el-border-color);
+            border-radius: 4px;
+            margin-left: 5px;
+        }
+        .row-box div:first-child{
+            margin-left: 0;
+        }
     </style>
     <link rel="stylesheet" href="css/index.css">
     <script src="js/vue3.min.js"></script>
@@ -27,9 +38,14 @@
 </head>
 <body>
 <div id="app">
-    <el-tabs tab-position="left" style="height: 100%">
-        <el-tab-pane label="五">
-            
+    <el-tabs tab-position="left" style="height: 100%;">
+        <el-tab-pane label="五" style="height: 320px;overflow: auto;">
+            <el-row class="row-box" v-for="month in 12" :key="month">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </el-row>
         </el-tab-pane>
         <el-tab-pane label="六">
             <el-row>
