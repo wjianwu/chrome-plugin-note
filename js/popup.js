@@ -47,17 +47,33 @@ $(function () {
                 maternityInsuranceCompany: ref(''),
                 housingProvidentFundCompany: ref('')
             });
+            let consumeObj = ref({
+                uuid: ref(''),
+                year: ref(''),
+                month: ref(''),
+
+                amount: ref(''),
+                tags: ref('')
+            })
             let dataStr = localStorage.getItem("five-one-storage") ? localStorage.getItem("five-one-storage") : "[]";
             let data = JSON.parse(dataStr);
+
+            let dataStr1 = localStorage.getItem("consume-storage") ? localStorage.getItem("consume-storage") : "[]";
+            let data1 = JSON.parse(dataStr1);
+
             let tableData = ref(data);
+            let consumeTableData = ref(data1);
+
             const currentRow = ref();
             const drawer = ref(false)
+            const c_drawer = ref(false)
             return {
-                mainObj,
-                tableData,
+                mainObj, consumeObj,
+                tableData, consumeTableData,
                 yearList,
                 monthList,
-                drawer,
+                drawer, c_drawer,
+
                 openDraw: function () {
                     this.drawer = true;
                 },
@@ -186,7 +202,7 @@ $(function () {
                         if (!values.every((value) => Number.isNaN(value))) {
                             total = values.reduce((prev, curr) => {
                                 const value = Number(curr)
-                                return Number.isNaN(value) ? prev : (prev + curr);
+                                return Number.isNaN(value) ? prev : Number((prev + curr).toFixed(2));
                             })
                         }
 
@@ -194,13 +210,101 @@ $(function () {
                         if (!valuesCompany.every((value) => Number.isNaN(value))) {
                             totalCompany = valuesCompany.reduce((prev, curr) => {
                                 const value = Number(curr)
-                                return Number.isNaN(value) ? prev : (prev + curr);
+                                return Number.isNaN(value) ? prev : Number((prev + curr).toFixed(2));
                             })
                         }
-                        sums[index] = total + '+' + totalCompany + "=" + (total + totalCompany);
+                        sums[index] = total + '+' + totalCompany + "=" + Number((total + totalCompany)).toFixed(2);
                     })
                     return sums
-                }
+                },
+
+                openConsumeDraw: function () {
+                    this.c_drawer = true;
+                },
+                closeConsumeDraw: function () {
+                    this.clearConsume();
+                    this.c_drawer = false;
+                },
+                clearConsume: function () {
+                    this.consumeObj.uuid = '';
+
+                    this.consumeObj.name = '';
+                    this.consumeObj.amount = '';
+                },
+                addOrUpdateConsume: function () {
+                    if (consumeObj.value.uuid === "") {
+                        let dataStr = localStorage.getItem("consume-storage") ? localStorage.getItem("consume-storage") : "[]";
+                        let data = JSON.parse(dataStr);
+                        data.push({
+                            uuid: crypto.randomUUID(),
+                            year: this.consumeObj.year,
+                            month: this.consumeObj.month,
+
+                            name: this.consumeObj.name,
+                            amount: this.consumeObj.amount,
+                        })
+                        consumeTableData.value = data;
+                        localStorage.setItem("consume-storage", JSON.stringify(data));
+                        ElMessage({message: '添加成功', type: 'success'});
+                    } else {
+                        let temp = JSON.parse(localStorage.getItem("consume-storage"));
+                        temp.map(item => {
+                            if (item.uuid === consumeObj.value.uuid) {
+                                item.year = this.consumeObj.year;
+                                item.month = this.consumeObj.month;
+
+                                item.name = this.consumeObj.name;
+                                item.amount = this.consumeObj.amount;
+                            }
+                        })
+                        consumeTableData.value = temp;
+                        localStorage.setItem("consume-storage", JSON.stringify(temp));
+                        ElMessage({message: '修改成功', type: 'success'});
+                    }
+                    this.closeConsumeDraw();
+                },
+                getSummariesConsume: function (param) {
+                    const {columns, data} = param;
+                    const sums = [];
+                    columns.forEach((column, index) => {
+                        if (index === 0) {
+                            sums[index] = '合计'
+                            return
+                        }
+                        if (index === columns.length - 1 || index === columns.length - 2) {
+                            sums[index] = ''
+                            return
+                        }
+
+                        const values = data.map((item) => Number(item[column.property]));
+
+                        let total = 'N/A';
+                        if (!values.every((value) => Number.isNaN(value))) {
+                            total = values.reduce((prev, curr) => {
+                                const value = Number(curr)
+                                return Number.isNaN(value) ? prev : Number((prev + curr).toFixed(2));
+                            })
+                        }
+                        sums[index] = total;
+                    })
+                    return sums
+                },
+                handleEditConsume: function (row) {
+                    this.openConsumeDraw();
+                    consumeObj.value.uuid = row.uuid;
+                    consumeObj.value.year = row.year;
+                    consumeObj.value.month = row.month;
+
+                    consumeObj.value.name = row.name;
+                    consumeObj.value.amount = row.amount;
+                },
+                handleDeleteConsume: function (row) {
+                    consumeTableData.value = consumeTableData.value.filter(item => {
+                        return item.uuid !== row.uuid;
+                    });
+                    localStorage.setItem("consume-storage", JSON.stringify(consumeTableData.value));
+                    ElMessage({message: '删除成功', type: 'success'});
+                },
             };
         },
     }
